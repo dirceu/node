@@ -83,3 +83,26 @@ e5.once('removeListener', common.mustCall(function(name, cb) {
 }));
 e5.removeListener('hello', listener1);
 assert.deepEqual([], e5.listeners('hello'));
+
+// a listener removed from an event from within the emit cycle of
+// that event* will still be called in that emit cycle
+var e6 = new events.EventEmitter(),
+  firstCount = 0,
+  secondCount = 0;
+
+function first() {
+  firstCount++;
+  e6.removeListener('e6test', second);
+}
+
+function second() {
+  secondCount++;
+}
+
+e6.on('e6test', first);
+e6.on('e6test', second);
+e6.emit('e6test');
+e6.emit('e6test');
+e6.emit('e6test');
+assert.equal(firstCount, 3);
+assert.equal(secondCount, 1);

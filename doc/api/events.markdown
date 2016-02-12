@@ -377,6 +377,32 @@ listener array. If any single listener has been added multiple times to the
 listener array for the specified `event`, then `removeListener` must be called
 multiple times to remove each instance.
 
+Please notice that a listener removed from an event *from within the emit cycle of that event* will still be called in that emit cycle:
+
+```js
+const EventEmitter = require('events');
+const emitter = new EventEmitter();
+
+function first() {
+  console.log('first! this will always be called.');
+  emitter.removeListener('test', second);
+}
+
+function second() {
+  console.log('second! this will only be called once in this context.');
+}
+
+emitter.on('test', first);
+emitter.on('test', second);
+
+emitter.emit('test');
+// first! this will always be called.
+// second! this will only be called once in this context.
+
+emitter.emit('test');
+// first! this will always be called.
+```
+
 Because listeners are managed using an internal array, calling this will
 change the position indices of any listener registered *after* the listener
 being removed. This will not impact the order in which listeners are called,
